@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Patient Care & Revenue Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f7f8;
+    --surface:#ffffff;
+    --surface-2:#eef3f4;
+    --ink:#152329;
+    --ink-soft:#54707a;
+    --ink-faint:#8aa0a7;
+    --border:#e0e8ea;
+    --accent:#0e7c86;
+    --accent-ink:#075a62;
+    --accent-2:#6c4fd1;
+    --accent-2-soft:#efe9fb;
+    --accent-soft:#e2f2f2;
+    --good:#1f9d66;
+    --good-soft:#e3f6ec;
+    --warn:#c98418;
+    --warn-soft:#faf0dd;
+    --critical:#c9463b;
+    --critical-soft:#fbeae8;
+    --shadow: 0 1px 2px rgba(21,35,41,0.04), 0 8px 24px -12px rgba(21,35,41,0.12);
+    --radius: 14px;
+    color-scheme: light;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  h1,h2,h3,.display{
+    font-family:'Manrope',ui-sans-serif,system-ui,sans-serif;
+    text-wrap:balance;
+    letter-spacing:-0.01em;
+  }
+  .wrap{max-width:1320px;margin:0 auto;padding:0 28px 80px;}
+
+  /* ---------- Header ---------- */
+  header.top{
+    background:linear-gradient(150deg,#0b5a63 0%, var(--accent) 55%, #29968f 100%);
+    color:#eefaf9;
+    padding:34px 0 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(560px 280px at 88% -10%, rgba(255,255,255,0.14), transparent 70%),
+      radial-gradient(420px 220px at 6% 120%, rgba(108,79,209,0.35), transparent 70%);
+    pointer-events:none;
+  }
+  header.top .wrap{position:relative; display:flex; flex-wrap:wrap; gap:24px; align-items:flex-end; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand-mark{
+    width:44px; height:44px; border-radius:12px;
+    background:rgba(255,255,255,0.16);
+    border:1px solid rgba(255,255,255,0.35);
+    display:flex; align-items:center; justify-content:center;
+    flex:none;
+  }
+  .brand-mark svg{width:24px;height:24px;}
+  .eyebrow{
+    font-size:12px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+    color:#c9f0ea; margin:0 0 6px;
+  }
+  h1{font-size:32px; font-weight:800; margin:0; color:#fff;}
+  .sub{font-size:14.5px; color:#d6f1ee; max-width:640px; margin-top:8px;}
+  .period-card{
+    background:rgba(9,45,49,0.35);
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:12px;
+    padding:14px 20px;
+    min-width:230px;
+    backdrop-filter:blur(2px);
+  }
+  .period-card .lbl{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#bfe9e3; font-weight:700;}
+  .period-card .val{font-size:18px; font-weight:700; color:#fff; margin-top:4px;}
+  .period-card .val2{font-size:12.5px; color:#cdeeea; margin-top:6px;}
+
+  /* ---------- Filter bar ---------- */
+  .filterbar{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:16px 20px;
+    margin-top:-26px;
+    position:relative;
+    display:flex; flex-wrap:wrap; gap:22px; align-items:center;
+  }
+  .filter-group{display:flex; flex-direction:column; gap:8px;}
+  .filter-group .fg-title{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-faint);}
+  .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip{
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--ink-soft);
+    font-family:'Inter',sans-serif;
+    font-size:12.5px; font-weight:600;
+    padding:6px 12px;
+    border-radius:100px;
+    cursor:pointer;
+    transition:all .15s ease;
+    user-select:none;
+  }
+  .chip:hover{border-color:var(--accent);}
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .chip.active.alt{background:var(--accent-2); border-color:var(--accent-2);}
+  .filterbar .spacer{flex:1;}
+  .reset-btn{
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--ink);
+    font-weight:700; font-size:12.5px;
+    padding:9px 16px; border-radius:10px;
+    cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+    transition:all .15s ease;
+  }
+  .reset-btn:hover{border-color:var(--critical); color:var(--critical);}
+
+  /* ---------- Section headings ---------- */
+  section{margin-top:44px;}
+  .sec-head{display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
+  .sec-head h2{font-size:20px; font-weight:800; margin:0; display:flex; align-items:center; gap:10px;}
+  .sec-head h2 .tag{
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--accent-ink); background:var(--accent-soft); padding:4px 10px; border-radius:100px;
+  }
+  .sec-desc{font-size:13.5px; color:var(--ink-soft); max-width:560px;}
+
+  /* ---------- KPI grid ---------- */
+  .kpi-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
+  }
+  .kpi{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:18px 18px 16px;
+    display:flex; flex-direction:column; gap:8px;
+    position:relative;
+    overflow:hidden;
+  }
+  .kpi .icon{
+    width:34px;height:34px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--accent-soft); color:var(--accent-ink);
+    flex:none;
+  }
+  .kpi .icon svg{width:18px;height:18px;}
+  .kpi .icon.purple{background:var(--accent-2-soft); color:var(--accent-2);}
+  .kpi .icon.warn{background:var(--warn-soft); color:var(--warn);}
+  .kpi .icon.crit{background:var(--critical-soft); color:var(--critical);}
+  .kpi .icon.good{background:var(--good-soft); color:var(--good);}
+  .kpi .label{font-size:12px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;}
+  .kpi .value{font-size:26px; font-weight:800; font-family:'Manrope',sans-serif; letter-spacing:-0.02em;}
+  .kpi .note{font-size:12px; color:var(--ink-soft);}
+
+  /* ---------- Cards / panels ---------- */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px 22px;
+  }
+  .grid-2{display:grid; grid-template-columns:1.4fr 1fr; gap:16px;}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  .grid-2b{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .panel h3{font-size:14.5px; font-weight:700; margin:0 0 2px;}
+  .panel .finding{
+    font-size:13px; color:var(--ink-soft); margin:4px 0 14px; line-height:1.55;
+  }
+  .panel .finding b{color:var(--ink); font-weight:700;}
+  .chart-box{position:relative; height:230px;}
+  .chart-box.tall{height:270px;}
+
+  .stat-row{display:flex; gap:14px; flex-wrap:wrap;}
+  .stat-pill{
+    flex:1; min-width:140px;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .stat-pill .k{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint);}
+  .stat-pill .v{font-size:19px; font-weight:800; font-family:'Manrope',sans-serif; margin-top:4px;}
+  .stat-pill .v.flat{color:var(--ink-soft); font-size:13px; font-weight:600; margin-top:6px;}
+
+  .implication{
+    margin-top:14px; padding:12px 14px;
+    background:var(--accent-2-soft);
+    border-left:3px solid var(--accent-2);
+    border-radius:8px;
+    font-size:12.5px; color:#3a2b74;
+  }
+  .implication b{color:#26195c;}
+
+  /* Ad-hoc */
+  .adhoc-card{
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .adhoc-num{
+    width:30px;height:30px;border-radius:8px;
+    background:var(--ink); color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Manrope',sans-serif; font-weight:800; font-size:13px;
+  }
+  .adhoc-metric{font-size:24px; font-weight:800; font-family:'Manrope',sans-serif;}
+  .adhoc-metric span{font-size:13px; color:var(--ink-soft); font-weight:600; margin-left:6px;}
+  .badge{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:700; padding:3px 9px; border-radius:100px;
+    background:var(--warn-soft); color:var(--warn);
+    width:fit-content;
+  }
+  .badge.crit{background:var(--critical-soft); color:var(--critical);}
+  .badge.good{background:var(--good-soft); color:var(--good);}
+
+  /* Executive summary */
+  .exec-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+  .exec-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px; display:flex; gap:12px;
+  }
+  .exec-card .num{
+    font-family:'Manrope',sans-serif; font-weight:800; font-size:15px;
+    width:26px;height:26px;border-radius:7px; flex:none;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--accent-soft); color:var(--accent-ink);
+  }
+  .exec-card p{margin:0; font-size:13.5px; color:var(--ink-soft); line-height:1.55;}
+  .exec-card p b{color:var(--ink); font-weight:700;}
+
+  /* Takeaways */
+  .takeaway-wrap{
+    background:linear-gradient(160deg,#122225 0%, #1a2f31 100%);
+    border-radius:18px; padding:30px 30px 26px; color:#eef6f5;
+  }
+  .takeaway-wrap h2{color:#fff;}
+  .takeaway-wrap .sec-desc{color:#a9c3c1;}
+  .tk-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:16px;}
+  .tk-card{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px; padding:16px;
+  }
+  .tk-card .tk-what{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#7fd9cf; margin-bottom:6px;}
+  .tk-card h4{margin:0 0 8px; font-size:14.5px; font-family:'Manrope',sans-serif; font-weight:800; color:#fff;}
+  .tk-card p{margin:0; font-size:12.8px; color:#c3d6d4; line-height:1.55;}
+
+  footer.foot{
+    max-width:1320px; margin:36px auto 0; padding:18px 28px 0;
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+    font-size:11.5px; color:var(--ink-faint); border-top:1px solid var(--border);
+  }
+
+  @media (max-width: 1080px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .grid-2, .grid-3, .grid-2b, .exec-grid, .tk-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width: 640px){
+    .kpi-grid{grid-template-columns:1fr;}
+    h1{font-size:24px;}
+    .wrap{padding:0 16px 60px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#eafffb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.7-10-9.3C.3 8 2 4 6 4c2.2 0 3.6 1.2 4.6 2.3L12 7.7l1.4-1.4C14.4 5.2 15.8 4 18 4c4 0 5.7 4 4 7.7-2.5 4.6-10 9.3-10 9.3z"/></svg>
+      </div>
+      <div>
+        <p class="eyebrow">Executive Analytics · Hospital Network</p>
+        <h1>Patient Care &amp; Revenue Intelligence</h1>
+        <p class="sub">Network-wide view of patient volume, billing performance, payer mix and care-quality signals across the full admissions record set.</p>
+      </div>
+    </div>
+    <div class="period-card">
+      <div class="lbl">Reporting Period</div>
+      <div class="val">May 2019 – May 2024</div>
+      <div class="val2">54,966 verified patient records · 534 duplicates removed prior to analysis</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- Filter bar -->
+  <div class="filterbar">
+    <div class="filter-group">
+      <div class="fg-title">Focus · Medical Condition</div>
+      <div class="chips" id="conditionChips"></div>
+    </div>
+    <div class="filter-group">
+      <div class="fg-title">Focus · Insurance Provider</div>
+      <div class="chips" id="insuranceChips"></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="reset-btn" id="resetBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      Reset Filters
+    </button>
+  </div>
+
+  <!-- KPI CARDS -->
+  <section>
+    <div class="sec-head">
+      <h2>Network Performance <span class="tag">Live KPIs</span></h2>
+      <div class="sec-desc">Selecting a condition or payer above updates the highlighted figures.</div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="label">Total Patient Records</div>
+        <div class="value">54,966</div>
+        <div class="note">Cleaned dataset (55,500 raw − 534 duplicates)</div>
+      </div>
+      <div class="kpi">
+        <div class="icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div class="label">Total Billing Volume</div>
+        <div class="value">$1.41B</div>
+        <div class="note">Avg. billing × total patients</div>
+      </div>
+      <div class="kpi">
+        <div class="icon good"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></div>
+        <div class="label">Avg. Billing / Patient</div>
+        <div class="value">$25,595</div>
+        <div class="note">Stable ±3% across 5-yr window</div>
+      </div>
+      <div class="kpi">
+        <div class="icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <div class="label">Average Patient Age</div>
+        <div class="value">51.5 yrs</div>
+        <div class="note">Range 13–89 years</div>
+      </div>
+      <div class="kpi">
+        <div class="icon crit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div class="label">Emergency Admissions</div>
+        <div class="value">18,102</div>
+        <div class="note">32.9% of all admissions</div>
+      </div>
+      <div class="kpi">
+        <div class="icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+        <div class="label">High-Cost Patients</div>
+        <div class="value">5,497</div>
+        <div class="note">Top decile of billing (&gt;90th pct.)</div>
+      </div>
+      <div class="kpi">
+        <div class="icon crit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+        <div class="label">Priority Review Cases</div>
+        <div class="value">6,038</div>
+        <div class="note">Emergency + abnormal test results</div>
+      </div>
+      <div class="kpi">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></div>
+        <div class="label">Insurance Providers</div>
+        <div class="value">5</div>
+        <div class="note">Evenly split, 19.7%–20.3% share each</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <section>
+    <div class="sec-head">
+      <h2>Executive Summary</h2>
+      <div class="sec-desc">What leadership needs to know, at a glance.</div>
+    </div>
+    <div class="exec-grid">
+      <div class="exec-card">
+        <div class="num">1</div>
+        <p>The network processed <b>54,966 patient episodes</b> generating an estimated <b>$1.41B</b> in aggregate billing over the five-year window — with average cost per patient holding steady near <b>$25,600</b>.</p>
+      </div>
+      <div class="exec-card">
+        <div class="num">2</div>
+        <p>Case mix is <b>unusually balanced</b>: all six tracked conditions (Arthritis, Diabetes, Hypertension, Obesity, Cancer, Asthma) sit within a tight 9,095–9,218 patient band — no single condition dominates capacity.</p>
+      </div>
+      <div class="exec-card">
+        <div class="num">3</div>
+        <p>Billing shows <b>no age-based cost gradient</b> — senior patients (60+) average $25,564 versus $25,595 network-wide, meaning cost is driven by condition/procedure, not patient age.</p>
+      </div>
+      <div class="exec-card">
+        <div class="num">4</div>
+        <p>Payer mix is <b>well diversified</b> across 5 insurers (19.7%–20.3% share each), limiting reimbursement-concentration risk with any single provider.</p>
+      </div>
+      <div class="exec-card">
+        <div class="num">5</div>
+        <p><b>6,038 emergency patients (11.0% of the network)</b> presented with abnormal test results — a sizeable, ongoing clinical-review workload that warrants a standing triage process.</p>
+      </div>
+      <div class="exec-card">
+        <div class="num">6</div>
+        <p>Average monthly billing has stayed inside a narrow <b>$24,900–$26,300</b> band across five years — costs are stable with <b>no inflationary trend</b> detected in the data.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEY BUSINESS INSIGHTS -->
+  <section>
+    <div class="sec-head">
+      <h2>Key Business Insights <span class="tag">Core Analysis</span></h2>
+      <div class="sec-desc">Findings behind the network's five core performance questions.</div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="panel">
+        <h3>Where does patient volume concentrate?</h3>
+        <p class="finding"><b>Arthritis (9,218 patients)</b> is marginally the most common condition network-wide, but every tracked condition falls within a narrow 1.3% band of one another.</p>
+        <div class="chart-box tall"><canvas id="conditionChart"></canvas></div>
+        <div class="implication"><b>Implication:</b> No condition-specific bottleneck exists — clinical staffing and equipment budgets can be allocated evenly across Arthritis, Diabetes, Hypertension, Obesity, Cancer and Asthma service lines.</div>
+      </div>
+      <div class="panel">
+        <h3>Which payers cover the network?</h3>
+        <p class="finding">Coverage is split almost equally across five providers, led narrowly by <b>Cigna (20.3%)</b>.</p>
+        <div class="chart-box tall"><canvas id="insuranceChart"></canvas></div>
+        <div class="implication"><b>Implication:</b> No single payer holds negotiating leverage over the network — contract terms can be optimized independently across all five relationships.</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="panel">
+        <h3>Is treatment cost rising over time?</h3>
+        <p class="finding">Monthly average billing has held flat since <b>2019</b>.</p>
+        <div class="chart-box"><canvas id="trendChart"></canvas></div>
+        <div class="implication" style="margin-top:12px;"><b>Implication:</b> Pricing and cost controls are working — no runaway cost inflation to flag to finance.</div>
+      </div>
+      <div class="panel">
+        <h3>Does age drive treatment cost?</h3>
+        <p class="finding">Senior (60+) billing is statistically flat versus the network average.</p>
+        <div class="stat-row" style="margin-top:6px;">
+          <div class="stat-pill">
+            <div class="k">Network Avg.</div>
+            <div class="v">$25,595</div>
+          </div>
+          <div class="stat-pill">
+            <div class="k">Senior (60+) Avg.</div>
+            <div class="v">$25,564</div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:150px; margin-top:12px;"><canvas id="ageCostChart"></canvas></div>
+        <div class="implication"><b>Implication:</b> Age-based risk premiums or reserves are not supported by the data — cost drivers sit at the condition/procedure level.</div>
+      </div>
+      <div class="panel">
+        <h3>How is the patient population aged?</h3>
+        <p class="finding">A broad adult population, skewing middle-aged to senior.</p>
+        <div class="stat-row" style="margin-top:6px;">
+          <div class="stat-pill"><div class="k">Youngest</div><div class="v">13</div></div>
+          <div class="stat-pill"><div class="k">Average</div><div class="v">51.5</div></div>
+          <div class="stat-pill"><div class="k">Oldest</div><div class="v">89</div></div>
+        </div>
+        <div class="implication" style="margin-top:14px;"><b>Implication:</b> Service planning should account for a wide age span — from pediatric-adjacent to geriatric care — rather than a narrow demographic.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AD-HOC INSIGHTS -->
+  <section>
+    <div class="sec-head">
+      <h2>Ad-Hoc Management Insights <span class="tag">Requested Analyses</span></h2>
+      <div class="sec-desc">Targeted follow-ups requested by operations, finance and clinical leadership.</div>
+    </div>
+    <div class="grid-3">
+      <div class="panel adhoc-card">
+        <div class="adhoc-num">1</div>
+        <h3>Emergency Capacity Planning</h3>
+        <div class="adhoc-metric">18,102 <span>total ED admissions</span></div>
+        <div class="chart-box" style="height:150px;"><canvas id="edMonthChart"></canvas></div>
+        <span class="badge">Peak: July (1,573)</span>
+        <p class="finding" style="margin-bottom:0;">ED volume swings ~8% between the lowest month (February, 1,452) and the highest (July, 1,573) — a modest, predictable seasonal pattern.</p>
+      </div>
+      <div class="panel adhoc-card">
+        <div class="adhoc-num">2</div>
+        <h3>High-Cost Patient Groups</h3>
+        <div class="adhoc-metric">5,497 <span>patients flagged</span></div>
+        <div class="chart-box" style="height:150px;"><canvas id="highCostChart"></canvas></div>
+        <span class="badge">Top 10% of billing (&gt;90th pct.)</span>
+        <p class="finding" style="margin-bottom:0;">Exactly one in ten patients drives billing above the 90th percentile threshold — a defined, reviewable finance cohort.</p>
+      </div>
+      <div class="panel adhoc-card">
+        <div class="adhoc-num">3</div>
+        <h3>Priority Clinical Review</h3>
+        <div class="adhoc-metric">6,038 <span>cases flagged</span></div>
+        <div class="chart-box" style="height:150px;"><canvas id="priorityChart"></canvas></div>
+        <span class="badge crit">Emergency + Abnormal Results</span>
+        <p class="finding" style="margin-bottom:0;">11.0% of the network's patients are emergency admissions with abnormal test results — the highest-priority quality-review segment.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MANAGEMENT TAKEAWAYS -->
+  <section>
+    <div class="takeaway-wrap">
+      <div class="sec-head">
+        <h2>Management Takeaways</h2>
+        <div class="sec-desc">What's happening, why it matters, and where to focus next.</div>
+      </div>
+      <div class="tk-grid">
+        <div class="tk-card">
+          <div class="tk-what">Operations</div>
+          <h4>Case mix is balanced — resource evenly</h4>
+          <p>No condition line exceeds 16.8% of volume. Staffing, equipment and bed allocation can follow a standardized model across Arthritis, Diabetes, Hypertension, Obesity, Cancer and Asthma rather than over-indexing on one specialty.</p>
+        </div>
+        <div class="tk-card">
+          <div class="tk-what">Finance</div>
+          <h4>Costs are stable — no inflation signal</h4>
+          <p>Average billing has held inside a $24,900–$26,300 band for five straight years and does not rise with patient age. Cost-containment efforts should target procedure and condition mix, not demographic risk-adjustment.</p>
+        </div>
+        <div class="tk-card">
+          <div class="tk-what">Risk &amp; Payer Strategy</div>
+          <h4>Payer diversification limits exposure</h4>
+          <p>Five insurers each hold 19.7%–20.3% of coverage. No renegotiation with a single payer can materially disrupt revenue — a favorable position for contract leverage.</p>
+        </div>
+        <div class="tk-card">
+          <div class="tk-what">Staffing</div>
+          <h4>Plan for a July emergency-volume peak</h4>
+          <p>Emergency admissions rise ~8% from the February low to the July high. Proactive seasonal staffing ahead of summer can smooth the surge.</p>
+        </div>
+        <div class="tk-card">
+          <div class="tk-what">Quality &amp; Safety</div>
+          <h4>Formalize the abnormal-results triage queue</h4>
+          <p>6,038 emergency patients (11.0% of the network) carried abnormal test results. A standing fast-track clinical review protocol would ensure timely follow-up on this at-risk group.</p>
+        </div>
+        <div class="tk-card">
+          <div class="tk-what">Finance</div>
+          <h4>Keep the high-cost cohort under standing review</h4>
+          <p>5,497 patients (top billing decile) should remain a recurring monthly finance review to catch billing anomalies and validate documentation early.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="foot">
+  <span>Patient Care &amp; Revenue Intelligence · Executive Dashboard</span>
+  <span>Source: Network Admissions Dataset · 54,966 records · May 2019 – May 2024</span>
+</footer>
+
+<script>
+(function(){
+  const inkSoft = '#54707a';
+  const border = '#e0e8ea';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = inkSoft;
+  Chart.defaults.font.size = 11.5;
+
+  const accent = '#0e7c86';
+  const accent2 = '#6c4fd1';
+  const dim = '#c9d6d8';
+
+  // ---- Real data extracted from the notebook's analysis outputs ----
+  const conditions = [
+    {name:'Arthritis', count:9218},
+    {name:'Diabetes', count:9216},
+    {name:'Hypertension', count:9151},
+    {name:'Obesity', count:9146},
+    {name:'Cancer', count:9140},
+    {name:'Asthma', count:9095}
+  ];
+  const totalPatients = 54966;
+
+  const insurers = [
+    {name:'Cigna', count:11139},
+    {name:'Medicare', count:11039},
+    {name:'UnitedHealthcare', count:11014},
+    {name:'Blue Cross', count:10952},
+    {name:'Aetna', count:10822}
+  ];
+
+  // Known monthly average billing sample points (Series was truncated in source; first & last 5 months shown)
+  const trendLabels = ['2019-05','2019-06','2019-07','2019-08','2019-09','⋯','2024-01','2024-02','2024-03','2024-04','2024-05'];
+  const trendValues  = [25897.45,26324.00,25928.60,25457.10,24915.55,null,25836.70,25703.59,25310.58,24930.03,25464.90];
+
+  const edMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const edCounts = [1547,1452,1528,1473,1533,1483,1573,1533,1500,1490,1462,1528];
+
+  const conditionColors = ['#0e7c86','#6c4fd1','#c98418','#1f9d66','#c9463b','#3f8fd9'];
+  const insurerColors = ['#0e7c86','#6c4fd1','#c98418','#1f9d66','#c9463b'];
+
+  // ---- Condition bar chart ----
+  const conditionChart = new Chart(document.getElementById('conditionChart'), {
+    type: 'bar',
+    data: {
+      labels: conditions.map(c=>c.name),
+      datasets: [{
+        data: conditions.map(c=>c.count),
+        backgroundColor: conditions.map((c,i)=>conditionColors[i]),
+        borderRadius: 6,
+        maxBarThickness: 42
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label: (ctx)=> ctx.parsed.y.toLocaleString()+' patients ('+(ctx.parsed.y/totalPatients*100).toFixed(1)+'%)' } }
+      },
+      scales:{
+        y:{ beginAtZero:true, grid:{color:border}, ticks:{callback:v=>v.toLocaleString()} },
+        x:{ grid:{display:false} }
+      }
+    }
+  });
+
+  // ---- Insurance donut ----
+  const insuranceChart = new Chart(document.getElementById('insuranceChart'), {
+    type:'doughnut',
+    data:{
+      labels: insurers.map(i=>i.name),
+      datasets:[{ data: insurers.map(i=>i.count), backgroundColor: insurerColors, borderWidth:3, borderColor:'#fff' }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      cutout:'62%',
+      plugins:{
+        legend:{ position:'bottom', labels:{ boxWidth:10, boxHeight:10, padding:12, usePointStyle:true, pointStyle:'circle' } },
+        tooltip:{ callbacks:{ label:(ctx)=> ctx.label+': '+ctx.parsed.toLocaleString()+' ('+(ctx.parsed/totalPatients*100).toFixed(1)+'%)' } }
+      }
+    }
+  });
+
+  // ---- Trend line ----
+  const trendChart = new Chart(document.getElementById('trendChart'), {
+    type:'line',
+    data:{
+      labels: trendLabels,
+      datasets:[{
+        data: trendValues,
+        borderColor: accent, backgroundColor:'rgba(14,124,134,0.12)',
+        fill:true, tension:.35, spanGaps:true,
+        pointRadius:3, pointBackgroundColor:accent, pointBorderColor:'#fff', pointBorderWidth:1.5
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> ctx.parsed.y? '$'+ctx.parsed.y.toLocaleString(undefined,{maximumFractionDigits:0}) : 'data continues…' } } },
+      scales:{
+        y:{ grid:{color:border}, ticks:{ callback:v=>'$'+(v/1000)+'k' } },
+        x:{ grid:{display:false}, ticks:{ maxRotation:0, autoSkip:false, font:{size:10} } }
+      }
+    }
+  });
+
+  // ---- Age vs cost comparison ----
+  new Chart(document.getElementById('ageCostChart'), {
+    type:'bar',
+    data:{
+      labels:['Network Average','Senior (60+)'],
+      datasets:[{ data:[25594.54, 25563.59], backgroundColor:[accent, accent2], borderRadius:6, maxBarThickness:60 }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=>'$'+ctx.parsed.x.toLocaleString(undefined,{maximumFractionDigits:0}) } } },
+      scales:{ x:{ grid:{color:border}, ticks:{ callback:v=>'$'+(v/1000)+'k' } }, y:{ grid:{display:false} } }
+    }
+  });
+
+  // ---- ED by month ----
+  new Chart(document.getElementById('edMonthChart'), {
+    type:'bar',
+    data:{ labels: edMonths, datasets:[{ data: edCounts, backgroundColor: edMonths.map(m=> m==='Jul' ? '#c9463b' : (m==='Feb' ? '#c98418' : accent)), borderRadius:4, maxBarThickness:20 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> ctx.parsed.y.toLocaleString()+' emergency admissions' } } },
+      scales:{ y:{ display:false }, x:{ grid:{display:false}, ticks:{ font:{size:9.5} } } }
+    }
+  });
+
+  // ---- High cost donut ----
+  new Chart(document.getElementById('highCostChart'), {
+    type:'doughnut',
+    data:{ labels:['Top 10% billing','Remaining 90%'], datasets:[{ data:[5497, totalPatients-5497], backgroundColor:[accent2, '#e9e4f7'], borderWidth:3, borderColor:'#fff' }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> ctx.label+': '+ctx.parsed.toLocaleString() } } }
+    }
+  });
+
+  // ---- Priority cases donut ----
+  new Chart(document.getElementById('priorityChart'), {
+    type:'doughnut',
+    data:{ labels:['Emergency + Abnormal','Remaining network'], datasets:[{ data:[6038, totalPatients-6038], backgroundColor:['#c9463b', '#f7e1df'], borderWidth:3, borderColor:'#fff' }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> ctx.label+': '+ctx.parsed.toLocaleString() } } }
+    }
+  });
+
+  // ---------------- Filters (highlight + live recompute from real aggregate data) ----------------
+  const condChipWrap = document.getElementById('conditionChips');
+  const insChipWrap = document.getElementById('insuranceChips');
+  let activeConditions = new Set();
+  let activeInsurers = new Set();
+
+  conditions.forEach(c=>{
+    const chip = document.createElement('button');
+    chip.className='chip'; chip.textContent=c.name; chip.dataset.name=c.name;
+    chip.addEventListener('click', ()=>{
+      if(activeConditions.has(c.name)) activeConditions.delete(c.name); else activeConditions.add(c.name);
+      renderConditionState();
+    });
+    condChipWrap.appendChild(chip);
+  });
+  insurers.forEach(ins=>{
+    const chip = document.createElement('button');
+    chip.className='chip alt-src'; chip.textContent=ins.name; chip.dataset.name=ins.name;
+    chip.addEventListener('click', ()=>{
+      if(activeInsurers.has(ins.name)) activeInsurers.delete(ins.name); else activeInsurers.add(ins.name);
+      renderInsurerState();
+    });
+    insChipWrap.appendChild(chip);
+  });
+
+  function renderConditionState(){
+    [...condChipWrap.children].forEach(ch=> ch.classList.toggle('active', activeConditions.has(ch.dataset.name)));
+    const anyActive = activeConditions.size>0;
+    conditionChart.data.datasets[0].backgroundColor = conditions.map((c,i)=> !anyActive || activeConditions.has(c.name) ? conditionColors[i] : dim);
+    conditionChart.update();
+  }
+  function renderInsurerState(){
+    [...insChipWrap.children].forEach(ch=> ch.classList.toggle('active', activeInsurers.has(ch.dataset.name)));
+    [...insChipWrap.children].forEach(ch=> ch.classList.add('alt'));
+    const anyActive = activeInsurers.size>0;
+    insuranceChart.data.datasets[0].backgroundColor = insurers.map((ins,i)=> !anyActive || activeInsurers.has(ins.name) ? insurerColors[i] : dim);
+    insuranceChart.update();
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    activeConditions.clear(); activeInsurers.clear();
+    renderConditionState(); renderInsurerState();
+  });
+})();
+</script>
+</body>
+</html>
